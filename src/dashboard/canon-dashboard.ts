@@ -20,9 +20,17 @@ export type DashboardLocation = {
   lastSyncedAt: Date;
 };
 
+export type DashboardFaction = {
+  id: string;
+  name: string;
+  notionLastEditedAt: Date;
+  lastSyncedAt: Date;
+};
+
 export type CanonDashboardRepository = {
   listCharactersForDashboard(): Promise<DashboardCharacter[]>;
   listLocationsForDashboard(): Promise<DashboardLocation[]>;
+  listFactionsForDashboard(): Promise<DashboardFaction[]>;
   listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
 };
 
@@ -32,7 +40,7 @@ export type CanonDashboard = {
     count: number;
   }>;
   recentActivity: Array<{
-    elementType: "Character" | "Location";
+    elementType: "Character" | "Location" | "Faction";
     entityId: string;
     label: string;
     happenedAt: Date;
@@ -45,6 +53,7 @@ export async function getCanonDashboard(input: {
 }): Promise<CanonDashboard> {
   const characters = await input.repository.listCharactersForDashboard();
   const locations = await input.repository.listLocationsForDashboard();
+  const factions = await input.repository.listFactionsForDashboard();
   const syncStates = await input.repository.listSyncStatesForDashboard();
 
   return {
@@ -55,7 +64,9 @@ export async function getCanonDashboard(input: {
           ? characters.length
           : elementType === "Location"
             ? locations.length
-            : 0,
+            : elementType === "Faction"
+              ? factions.length
+              : 0,
     })),
     recentActivity: [
       ...characters.map((character) => ({
@@ -69,6 +80,12 @@ export async function getCanonDashboard(input: {
         entityId: location.id,
         label: location.name,
         happenedAt: location.notionLastEditedAt,
+      })),
+      ...factions.map((faction) => ({
+        elementType: "Faction" as const,
+        entityId: faction.id,
+        label: faction.name,
+        happenedAt: faction.notionLastEditedAt,
       })),
     ]
       .sort((left, right) => right.happenedAt.getTime() - left.happenedAt.getTime())

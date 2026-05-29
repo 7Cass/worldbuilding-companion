@@ -4,6 +4,7 @@ export type CanonNavigationItem = {
     | "Canon Dashboard"
     | "Characters"
     | "Locations"
+    | "Factions"
     | "Entity Workspace"
     | "Review Queue";
   href: string;
@@ -27,6 +28,10 @@ export const CANON_NAVIGATION_ITEMS = [
     href: "/locations",
   },
   {
+    label: "Factions",
+    href: "/factions",
+  },
+  {
     label: "Entity Workspace",
     href: "/entity-workspace",
   },
@@ -45,3 +50,6 @@ export const CANON_ELEMENT_TYPES = [
   "Relationship",
   "Source",
 ] as const;
+
+export const FACTION_LORE_ENTRY_BOUNDARY =
+  "A Faction is an organized group with identity, goals, and membership boundary; a religion as doctrine or belief system is a Lore Entry.";

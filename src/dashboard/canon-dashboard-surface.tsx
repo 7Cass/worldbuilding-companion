@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  Flag,
   MapPin,
   RefreshCw,
   Users,
@@ -16,6 +17,7 @@ type CanonDashboardSurfaceProps = {
   error?: string;
   syncCharactersAction: () => void | Promise<void>;
   syncLocationsAction: () => void | Promise<void>;
+  syncFactionsAction: () => void | Promise<void>;
 };
 
 export function CanonDashboardSurface({
@@ -23,6 +25,7 @@ export function CanonDashboardSurface({
   error,
   syncCharactersAction,
   syncLocationsAction,
+  syncFactionsAction,
 }: CanonDashboardSurfaceProps) {
   return (
     <main className="grid gap-6">
@@ -48,6 +51,12 @@ export function CanonDashboardSurface({
               <span>Sync Locations</span>
             </Button>
           </form>
+          <form action={syncFactionsAction}>
+            <Button type="submit" variant="secondary">
+              <RefreshCw aria-hidden="true" className="size-4" />
+              <span>Sync Factions</span>
+            </Button>
+          </form>
           <Button asChild>
             <Link href="/characters">
               <Users aria-hidden="true" className="size-4" />
@@ -58,6 +67,12 @@ export function CanonDashboardSurface({
             <Link href="/locations">
               <MapPin aria-hidden="true" className="size-4" />
               <span>Browse Locations</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/factions">
+              <Flag aria-hidden="true" className="size-4" />
+              <span>Browse Factions</span>
             </Link>
           </Button>
         </div>
@@ -135,7 +150,9 @@ export function CanonDashboardSurface({
             <p className="text-sm font-medium text-slate-600">{item.elementType}</p>
             <p className="mt-3 text-3xl font-semibold text-slate-950">{item.count}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {item.elementType === "Character" || item.elementType === "Location"
+              {item.elementType === "Character" ||
+              item.elementType === "Location" ||
+              item.elementType === "Faction"
                 ? "Derived from Notion sync"
                 : "Awaiting Notion sync"}
             </p>
@@ -188,6 +205,10 @@ export function CanonDashboardSurface({
 function workspaceHrefFor(activity: CanonDashboard["recentActivity"][number]): string {
   if (activity.elementType === "Location") {
     return `/entity-workspace/locations/${activity.entityId}`;
+  }
+
+  if (activity.elementType === "Faction") {
+    return `/entity-workspace/factions/${activity.entityId}`;
   }
 
   return `/entity-workspace/characters/${activity.entityId}`;

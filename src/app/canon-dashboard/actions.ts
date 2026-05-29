@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { syncCharactersFromLocalSetup } from "@/characters/character-sync-flow";
+import { syncFactionsFromLocalSetup } from "@/factions/faction-sync-flow";
 import { syncLocationsFromLocalSetup } from "@/locations/location-sync-flow";
 
 export async function syncCharactersAction() {
@@ -21,6 +22,17 @@ export async function syncLocationsAction() {
 
   revalidatePath("/canon-dashboard");
   revalidatePath("/locations");
+
+  if (!result.ok) {
+    throw new Error(result.errors.join("\n"));
+  }
+}
+
+export async function syncFactionsAction() {
+  const result = await syncFactionsFromLocalSetup();
+
+  revalidatePath("/canon-dashboard");
+  revalidatePath("/factions");
 
   if (!result.ok) {
     throw new Error(result.errors.join("\n"));

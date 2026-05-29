@@ -42,6 +42,12 @@ After provisioning, the Canon Dashboard and Characters surface can sync the owne
 
 The Canon Dashboard shows the derived Character count and recent Character activity from Postgres. The Characters surface opens a Character Entity Workspace with core fields and placeholder areas for Relationships, Sources, diagnostics, and review state.
 
+## Faction Sync
+
+The Canon Dashboard and Factions surface can sync the owned Factions database from Notion into the local Postgres sidecar. Re-running Faction sync upserts by Canon and Notion page id, so the sidecar updates derived Faction records without duplicating them.
+
+The Canon Dashboard shows the derived Faction count and recent Faction activity from Postgres. The Factions surface opens a Faction Entity Workspace with core fields and placeholder areas for Relationships, Sources, diagnostics, and review state. Factions represent organized groups with identity, goals, and membership boundary; religion as doctrine remains a Lore Entry.
+
 ## Scripts
 
 - `pnpm dev`: starts the local Next.js app.
