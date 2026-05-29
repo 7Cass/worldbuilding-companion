@@ -32,6 +32,20 @@ This repository has no committed history yet, so no local commit convention is e
 
 Pull requests should describe the change, link related PRDs or ADRs, call out terminology changes, and include screenshots for UI work once the app exists. For architecture changes, add or update an ADR.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in GitHub Issues for `7Cass/worldbuilding-companion` using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default triage label vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repo with `CONTEXT.md` at the root and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+
 ## Agent-Specific Instructions
 
 Read `CONTEXT.md` before changing domain language. Treat Notion as the canonical source and Postgres as derived state unless an ADR changes that decision. AI output must remain reviewable through the Review Queue before it affects Canon data.
