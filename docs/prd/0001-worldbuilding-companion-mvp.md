@@ -67,7 +67,7 @@ The MVP focuses on structured worldbuilding and trust. Notion remains the canoni
 - Notion is the initial canonical source for the Canon. The companion app keeps derived state only.
 - The MVP uses an owned minimal Notion structure rather than inferring arbitrary user layouts.
 - The Notion structure uses separate databases for Characters, Locations, Factions, Events, Lore Entries, Relationships, and Sources.
-- The sidecar database uses Postgres from the MVP.
+- The sidecar database uses Postgres from the MVP, with a reproducible local runtime required before Canon provisioning depends on persisted sidecar state.
 - The app is a single-user MVP, not a multi-user SaaS.
 - The app runs as a local web app opened in the browser.
 - The app uses an internal Notion integration for the MVP rather than public OAuth.
@@ -147,7 +147,7 @@ Major modules to build:
 
 The PRD assumes a trust-first product posture: the creator owns the Canon, Notion remains the canonical source, and AI helps diagnose rather than write the world. This should shape copy, UX, prompts, and defaults.
 
-The MVP should be built in vertical slices. A sensible first slice is local app setup, Postgres/Drizzle, local config, and Notion schema provisioning for one Canon. A second slice can add sync and dashboard read models. A third slice can add Entity Workspace and Relationships. A fourth slice can add diagnostic AI and Review Queue behavior.
+The MVP should be built in vertical slices. The first slice establishes the local app shell, Postgres/Drizzle schema, scripts, and local configuration. A short follow-up slice should make the local Postgres runtime reproducible before Canon provisioning depends on the sidecar database. The next slice can create or register one Canon and provision the owned Notion structure. Later slices can add sync and dashboard read models, Entity Workspace and Relationships, then diagnostic AI and Review Queue behavior.
 
 The graph library should be evaluated only after real Canon data exists in the sidecar database. The spike should compare performance and UX for increasing node counts, filtering by Canon element type, highlighting neighborhoods, opening entities from nodes, and displaying Relationship types.
 
