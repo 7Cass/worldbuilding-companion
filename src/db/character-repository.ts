@@ -1,8 +1,12 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import type { CharacterBrowserItem } from "@/characters/character-browser";
 import type { CanonDashboardRepository, DashboardCharacter } from "@/dashboard/canon-dashboard";
 import type { CharacterSyncRepository } from "@/notion/character-sync";
+import type {
+  CanonSyncStateRecord,
+  SyncFailureCategory,
+} from "@/sync/canon-sync-state";
 import type { CharacterWorkspaceRecord } from "@/workspace/character-workspace";
 import type { SidecarDb } from "./canon-provisioning-repository";
 import * as schema from "./schema";
@@ -25,7 +29,7 @@ export type CharacterSyncStateRepository = {
   markCharacterSyncSucceeded(canonId: string, succeededAt: Date): Promise<void>;
   markCharacterSyncFailed(input: {
     canonId: string;
-    category: string;
+    category: SyncFailureCategory;
     message: string;
   }): Promise<void>;
 };
@@ -110,6 +114,13 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
 
       return characters.map(toDashboardCharacter);
     },
+    async listSyncStatesForDashboard() {
+      const syncStates = await db.select().from(schema.sidecarSyncState);
+
+      return syncStates
+        .filter((syncState) => syncState.source === CHARACTER_SYNC_SOURCE)
+        .map(toCanonSyncStateRecord);
+    },
     async listCharacters() {
       const characters = await db
         .select()
@@ -136,7 +147,7 @@ async function upsertSyncState(
     canonId: string;
     status: "syncing" | "succeeded" | "failed";
     lastSucceededAt: Date | null;
-    failureCategory: string | null;
+    failureCategory: SyncFailureCategory | null;
     failureMessage: string | null;
   },
 ) {
@@ -154,7 +165,9 @@ async function upsertSyncState(
       target: [schema.sidecarSyncState.canonId, schema.sidecarSyncState.source],
       set: {
         status: input.status,
-        lastSucceededAt: input.lastSucceededAt,
+        lastSucceededAt:
+          input.lastSucceededAt ??
+          sql`coalesce(${schema.sidecarSyncState.lastSucceededAt}, ${input.lastSucceededAt})`,
         failureCategory: input.failureCategory,
         failureMessage: input.failureMessage,
         updatedAt: new Date(),
@@ -171,6 +184,37 @@ function toDashboardCharacter(
     notionLastEditedAt: character.notionLastEditedAt,
     lastSyncedAt: character.lastSyncedAt,
   };
+}
+
+function toCanonSyncStateRecord(
+  syncState: typeof schema.sidecarSyncState.$inferSelect,
+): CanonSyncStateRecord {
+  return {
+    source: "Characters",
+    status: syncState.status,
+    lastSucceededAt: syncState.lastSucceededAt,
+    failure:
+      syncState.failureCategory && syncState.failureMessage
+        ? {
+            category: toSyncFailureCategory(syncState.failureCategory),
+            message: syncState.failureMessage,
+          }
+        : null,
+    updatedAt: syncState.updatedAt,
+  };
+}
+
+function toSyncFailureCategory(category: string): SyncFailureCategory {
+  if (
+    category === "missing_permissions" ||
+    category === "deleted_page" ||
+    category === "schema_drift" ||
+    category === "rate_limited"
+  ) {
+    return category;
+  }
+
+  return "unknown";
 }
 
 function toCharacterBrowserItem(

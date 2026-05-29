@@ -1,5 +1,10 @@
 import { CANON_ELEMENT_TYPES } from "@/domain/canon-vocabulary";
 import type { CanonElementType } from "@/notion/schema-provisioner";
+import {
+  type CanonSyncStateRecord,
+  type DashboardSyncState,
+  toDashboardSyncStates,
+} from "@/sync/canon-sync-state";
 
 export type DashboardCharacter = {
   id: string;
@@ -10,6 +15,7 @@ export type DashboardCharacter = {
 
 export type CanonDashboardRepository = {
   listCharactersForDashboard(): Promise<DashboardCharacter[]>;
+  listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
 };
 
 export type CanonDashboard = {
@@ -23,12 +29,14 @@ export type CanonDashboard = {
     label: string;
     happenedAt: Date;
   }>;
+  syncStates: DashboardSyncState[];
 };
 
 export async function getCanonDashboard(input: {
   repository: CanonDashboardRepository;
 }): Promise<CanonDashboard> {
   const characters = await input.repository.listCharactersForDashboard();
+  const syncStates = await input.repository.listSyncStatesForDashboard();
 
   return {
     elementCounts: CANON_ELEMENT_TYPES.map((elementType) => ({
@@ -44,5 +52,6 @@ export async function getCanonDashboard(input: {
         label: character.name,
         happenedAt: character.notionLastEditedAt,
       })),
+    syncStates: toDashboardSyncStates(syncStates),
   };
 }

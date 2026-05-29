@@ -6,9 +6,18 @@ import {
   type Env,
 } from "@/config/local-config";
 import { createSidecarDb } from "@/db/client";
-import { createDrizzleCharacterRepository } from "@/db/character-repository";
+import {
+  createDrizzleCharacterRepository,
+  type CharacterSyncStateRepository,
+  type CharacterSyncTarget,
+} from "@/db/character-repository";
 import { createNotionSdkCharacterSyncClient } from "@/notion/notion-sdk-character-sync-client";
-import { syncCharactersFromNotion } from "@/notion/character-sync";
+import {
+  syncCharactersFromNotion,
+  type CharacterSyncRepository,
+  type NotionCharacterSyncClient,
+} from "@/notion/character-sync";
+import { classifyNotionSyncFailure } from "@/notion/notion-sync-failures";
 
 export type CharacterSyncFlowResult =
   | {
@@ -46,44 +55,57 @@ export async function syncCharactersFromLocalSetup(input?: {
       };
     }
 
-    await repository.markCharacterSyncStarted(target.canonId);
-
-    try {
-      const now = new Date();
-      const result = await syncCharactersFromNotion({
-        canonId: target.canonId,
-        charactersDatabaseId: target.charactersDatabaseId,
-        notion: createNotionSdkCharacterSyncClient(
-          new Client({
-            auth: configResult.config.notion.token,
-          }),
-        ),
-        repository,
-        now,
-      });
-
-      await repository.markCharacterSyncSucceeded(target.canonId, now);
-
-      return {
-        ok: true,
-        syncedCount: result.syncedCount,
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Character sync failed unexpectedly.";
-
-      await repository.markCharacterSyncFailed({
-        canonId: target.canonId,
-        category: "notion_sync_failed",
-        message,
-      });
-
-      return {
-        ok: false,
-        errors: [message],
-      };
-    }
+    return await syncCharactersForTarget({
+      target,
+      notion: createNotionSdkCharacterSyncClient(
+        new Client({
+          auth: configResult.config.notion.token,
+        }),
+      ),
+      repository,
+    });
   } finally {
     await pool.end();
+  }
+}
+
+export async function syncCharactersForTarget(input: {
+  target: CharacterSyncTarget;
+  notion: NotionCharacterSyncClient;
+  repository: CharacterSyncRepository & CharacterSyncStateRepository;
+  now?: Date;
+}): Promise<CharacterSyncFlowResult> {
+  const now = input.now ?? new Date();
+
+  await input.repository.markCharacterSyncStarted(input.target.canonId);
+
+  try {
+    const result = await syncCharactersFromNotion({
+      canonId: input.target.canonId,
+      charactersDatabaseId: input.target.charactersDatabaseId,
+      notion: input.notion,
+      repository: input.repository,
+      now,
+    });
+
+    await input.repository.markCharacterSyncSucceeded(input.target.canonId, now);
+
+    return {
+      ok: true,
+      syncedCount: result.syncedCount,
+    };
+  } catch (error) {
+    const failure = classifyNotionSyncFailure(error);
+
+    await input.repository.markCharacterSyncFailed({
+      canonId: input.target.canonId,
+      category: failure.category,
+      message: failure.message,
+    });
+
+    return {
+      ok: false,
+      errors: [failure.message],
+    };
   }
 }

@@ -4,6 +4,7 @@ import { createSidecarDb } from "@/db/client";
 import { createDrizzleCharacterRepository } from "@/db/character-repository";
 import { getCanonDashboard, type CanonDashboard } from "@/dashboard/canon-dashboard";
 import { CANON_ELEMENT_TYPES } from "@/domain/canon-vocabulary";
+import { toDashboardSyncStates } from "@/sync/canon-sync-state";
 import type { CharacterWorkspaceRecord } from "@/workspace/character-workspace";
 
 export type LocalReadResult<T> =
@@ -120,5 +121,6 @@ function emptyDashboard(): CanonDashboard {
       count: 0,
     })),
     recentActivity: [],
+    syncStates: toDashboardSyncStates([]),
   };
 }

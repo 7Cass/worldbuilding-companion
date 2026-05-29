@@ -22,6 +22,9 @@ describe("getCanonDashboard", () => {
             },
           ];
         },
+        async listSyncStatesForDashboard() {
+          return [];
+        },
       },
     });
 
@@ -41,6 +44,46 @@ describe("getCanonDashboard", () => {
         entityId: "character-1",
         label: "Mira Vale",
         happenedAt: new Date("2026-05-29T10:00:00.000Z"),
+      },
+    ]);
+  });
+
+  it("shows stale Character sync state with the last successful sync and failure detail", async () => {
+    const dashboard = await getCanonDashboard({
+      repository: {
+        async listCharactersForDashboard() {
+          return [];
+        },
+        async listSyncStatesForDashboard() {
+          return [
+            {
+              source: "Characters",
+              status: "failed",
+              lastSucceededAt: new Date("2026-05-29T12:00:00.000Z"),
+              failure: {
+                category: "missing_permissions",
+                message:
+                  "Share the Characters database with the internal Notion integration, then retry sync.",
+              },
+              updatedAt: new Date("2026-05-29T13:00:00.000Z"),
+            },
+          ];
+        },
+      },
+    });
+
+    expect(dashboard.syncStates).toEqual([
+      {
+        source: "Characters",
+        status: "failed",
+        freshness: "stale",
+        lastSucceededAt: new Date("2026-05-29T12:00:00.000Z"),
+        failure: {
+          category: "missing_permissions",
+          message:
+            "Share the Characters database with the internal Notion integration, then retry sync.",
+        },
+        updatedAt: new Date("2026-05-29T13:00:00.000Z"),
       },
     ]);
   });
