@@ -1,6 +1,15 @@
 import type { SyncFailureDetail } from "@/sync/canon-sync-state";
 
-export function classifyNotionSyncFailure(error: unknown): SyncFailureDetail {
+export function classifyNotionSyncFailure(
+  error: unknown,
+  labels: {
+    pluralLabel: string;
+    singularLabel: string;
+  } = {
+    pluralLabel: "Characters",
+    singularLabel: "Character",
+  },
+): SyncFailureDetail {
   const code = readErrorCode(error);
   const message = readErrorMessage(error);
 
@@ -8,7 +17,7 @@ export function classifyNotionSyncFailure(error: unknown): SyncFailureDetail {
     return {
       category: "missing_permissions",
       message:
-        "Share the Characters database with the internal Notion integration, then retry sync.",
+        `Share the ${labels.pluralLabel} database with the internal Notion integration, then retry sync.`,
     };
   }
 
@@ -16,14 +25,14 @@ export function classifyNotionSyncFailure(error: unknown): SyncFailureDetail {
     return {
       category: "deleted_page",
       message:
-        "Restore the Characters database or update setup to the current Notion database, then retry sync.",
+        `Restore the ${labels.pluralLabel} database or update setup to the current Notion database, then retry sync.`,
     };
   }
 
   if (code === "rate_limited") {
     return {
       category: "rate_limited",
-      message: "Notion rate limited Character sync. Wait a moment, then retry sync.",
+      message: `Notion rate limited ${labels.singularLabel} sync. Wait a moment, then retry sync.`,
     };
   }
 
@@ -34,14 +43,14 @@ export function classifyNotionSyncFailure(error: unknown): SyncFailureDetail {
     return {
       category: "schema_drift",
       message:
-        "Restore the required Character properties in Notion, including the Name title property, then retry sync.",
+        `Restore the required ${labels.singularLabel} properties in Notion, including the Name title property, then retry sync.`,
     };
   }
 
   return {
     category: "unknown",
     message:
-      "Character sync failed. Review the Notion integration settings, then retry sync.",
+      `${labels.singularLabel} sync failed. Review the Notion integration settings, then retry sync.`,
   };
 }
 

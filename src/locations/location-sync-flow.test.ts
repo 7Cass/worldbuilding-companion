@@ -1,0 +1,139 @@
+import { describe, expect, it } from "vitest";
+
+import type {
+  DerivedLocationRecord,
+  LocationSyncRepository,
+  NotionLocationSyncClient,
+} from "@/notion/location-sync";
+import type { SyncFailureCategory } from "@/sync/canon-sync-state";
+import { syncLocationsForTarget } from "./location-sync-flow";
+
+describe("syncLocationsForTarget", () => {
+  it("records an understandable failure without changing existing derived Locations", async () => {
+    const repository = createInMemoryLocationSyncFlowRepository({
+      lastSucceededAt: new Date("2026-05-29T12:00:00.000Z"),
+      locations: [
+        createDerivedLocation({
+          notionPageId: "notion-location-page-1",
+          name: "The Glass Harbor",
+        }),
+      ],
+    });
+    const notion: NotionLocationSyncClient = {
+      async listLocationPages() {
+        throw {
+          code: "restricted_resource",
+          message:
+            "The integration cannot access this database with token secret_notion_token.",
+        };
+      },
+    };
+
+    const result = await syncLocationsForTarget({
+      target: {
+        canonId: "canon-1",
+        locationsDatabaseId: "locations-database",
+      },
+      notion,
+      repository,
+      now: new Date("2026-05-29T13:00:00.000Z"),
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        "Share the Locations database with the internal Notion integration, then retry sync.",
+      ],
+    });
+    expect(repository.locations).toEqual([
+      createDerivedLocation({
+        notionPageId: "notion-location-page-1",
+        name: "The Glass Harbor",
+      }),
+    ]);
+    expect(repository.upsertCalls).toBe(0);
+    expect(repository.syncState).toEqual({
+      status: "failed",
+      lastSucceededAt: new Date("2026-05-29T12:00:00.000Z"),
+      failureCategory: "missing_permissions",
+      failureMessage:
+        "Share the Locations database with the internal Notion integration, then retry sync.",
+    });
+    expect(repository.syncState.failureMessage).not.toContain("secret_notion_token");
+  });
+});
+
+function createInMemoryLocationSyncFlowRepository(input: {
+  lastSucceededAt: Date | null;
+  locations: DerivedLocationRecord[];
+}): LocationSyncRepository & {
+  locations: DerivedLocationRecord[];
+  upsertCalls: number;
+  syncState: {
+    status: "idle" | "syncing" | "succeeded" | "failed";
+    lastSucceededAt: Date | null;
+    failureCategory: SyncFailureCategory | null;
+    failureMessage: string | null;
+  };
+  markLocationSyncStarted(canonId: string): Promise<void>;
+  markLocationSyncSucceeded(canonId: string, succeededAt: Date): Promise<void>;
+  markLocationSyncFailed(input: {
+    canonId: string;
+    category: SyncFailureCategory;
+    message: string;
+  }): Promise<void>;
+} {
+  return {
+    locations: [...input.locations],
+    upsertCalls: 0,
+    syncState: {
+      status: "succeeded",
+      lastSucceededAt: input.lastSucceededAt,
+      failureCategory: null,
+      failureMessage: null,
+    },
+    async markLocationSyncStarted() {
+      this.syncState = {
+        status: "syncing",
+        lastSucceededAt: this.syncState.lastSucceededAt,
+        failureCategory: null,
+        failureMessage: null,
+      };
+    },
+    async markLocationSyncSucceeded(_canonId, succeededAt) {
+      this.syncState = {
+        status: "succeeded",
+        lastSucceededAt: succeededAt,
+        failureCategory: null,
+        failureMessage: null,
+      };
+    },
+    async markLocationSyncFailed(failure) {
+      this.syncState = {
+        status: "failed",
+        lastSucceededAt: this.syncState.lastSucceededAt,
+        failureCategory: failure.category,
+        failureMessage: failure.message,
+      };
+    },
+    async upsertLocations(records) {
+      this.upsertCalls += 1;
+      this.locations = records;
+    },
+  };
+}
+
+function createDerivedLocation(input: {
+  notionPageId: string;
+  name: string;
+}): DerivedLocationRecord {
+  return {
+    canonId: "canon-1",
+    notionPageId: input.notionPageId,
+    name: input.name,
+    notionUrl: `https://notion.so/${input.notionPageId}`,
+    notionCreatedAt: new Date("2026-05-28T10:00:00.000Z"),
+    notionLastEditedAt: new Date("2026-05-29T11:00:00.000Z"),
+    lastSyncedAt: new Date("2026-05-29T12:00:00.000Z"),
+  };
+}

@@ -13,8 +13,16 @@ export type DashboardCharacter = {
   lastSyncedAt: Date;
 };
 
+export type DashboardLocation = {
+  id: string;
+  name: string;
+  notionLastEditedAt: Date;
+  lastSyncedAt: Date;
+};
+
 export type CanonDashboardRepository = {
   listCharactersForDashboard(): Promise<DashboardCharacter[]>;
+  listLocationsForDashboard(): Promise<DashboardLocation[]>;
   listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
 };
 
@@ -24,7 +32,7 @@ export type CanonDashboard = {
     count: number;
   }>;
   recentActivity: Array<{
-    elementType: "Character";
+    elementType: "Character" | "Location";
     entityId: string;
     label: string;
     happenedAt: Date;
@@ -36,22 +44,36 @@ export async function getCanonDashboard(input: {
   repository: CanonDashboardRepository;
 }): Promise<CanonDashboard> {
   const characters = await input.repository.listCharactersForDashboard();
+  const locations = await input.repository.listLocationsForDashboard();
   const syncStates = await input.repository.listSyncStatesForDashboard();
 
   return {
     elementCounts: CANON_ELEMENT_TYPES.map((elementType) => ({
       elementType,
-      count: elementType === "Character" ? characters.length : 0,
+      count:
+        elementType === "Character"
+          ? characters.length
+          : elementType === "Location"
+            ? locations.length
+            : 0,
     })),
-    recentActivity: [...characters]
-      .sort((left, right) => right.notionLastEditedAt.getTime() - left.notionLastEditedAt.getTime())
-      .slice(0, 5)
-      .map((character) => ({
-        elementType: "Character",
+    recentActivity: [
+      ...characters.map((character) => ({
+        elementType: "Character" as const,
         entityId: character.id,
         label: character.name,
         happenedAt: character.notionLastEditedAt,
       })),
+      ...locations.map((location) => ({
+        elementType: "Location" as const,
+        entityId: location.id,
+        label: location.name,
+        happenedAt: location.notionLastEditedAt,
+      })),
+    ]
+      .sort((left, right) => right.happenedAt.getTime() - left.happenedAt.getTime())
+      .slice(0, 5)
+      .map((activity) => activity),
     syncStates: toDashboardSyncStates(syncStates),
   };
 }

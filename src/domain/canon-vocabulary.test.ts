@@ -8,6 +8,7 @@ describe("Canon vocabulary", () => {
       "Setup",
       "Canon Dashboard",
       "Characters",
+      "Locations",
       "Entity Workspace",
       "Review Queue",
     ]);

@@ -1,49 +1,49 @@
 import { desc, eq, sql } from "drizzle-orm";
 
-import type { CharacterBrowserItem } from "@/characters/character-browser";
-import type { DashboardCharacter } from "@/dashboard/canon-dashboard";
-import type { CharacterSyncRepository } from "@/notion/character-sync";
+import type { DashboardLocation } from "@/dashboard/canon-dashboard";
+import type { LocationBrowserItem } from "@/locations/location-browser";
+import type { LocationSyncRepository } from "@/notion/location-sync";
 import type {
   CanonSyncStateRecord,
   SyncFailureCategory,
 } from "@/sync/canon-sync-state";
-import type { CharacterWorkspaceRecord } from "@/workspace/character-workspace";
+import type { LocationWorkspaceRecord } from "@/workspace/location-workspace";
 import type { SidecarDb } from "./canon-provisioning-repository";
 import * as schema from "./schema";
 
-const CHARACTER_SYNC_SOURCE = "Characters";
+const LOCATION_SYNC_SOURCE = "Locations";
 
-export type CharacterSyncTarget = {
+export type LocationSyncTarget = {
   canonId: string;
-  charactersDatabaseId: string;
+  locationsDatabaseId: string;
 };
 
-export type CharacterReadRepository = {
-  listCharacters(): Promise<CharacterBrowserItem[]>;
-  findCharacterById(id: string): Promise<CharacterWorkspaceRecord | null>;
+export type LocationReadRepository = {
+  listLocations(): Promise<LocationBrowserItem[]>;
+  findLocationById(id: string): Promise<LocationWorkspaceRecord | null>;
 };
 
-export type CharacterSyncStateRepository = {
-  findCharacterSyncTarget(): Promise<CharacterSyncTarget | null>;
-  markCharacterSyncStarted(canonId: string): Promise<void>;
-  markCharacterSyncSucceeded(canonId: string, succeededAt: Date): Promise<void>;
-  markCharacterSyncFailed(input: {
+export type LocationSyncStateRepository = {
+  findLocationSyncTarget(): Promise<LocationSyncTarget | null>;
+  markLocationSyncStarted(canonId: string): Promise<void>;
+  markLocationSyncSucceeded(canonId: string, succeededAt: Date): Promise<void>;
+  markLocationSyncFailed(input: {
     canonId: string;
     category: SyncFailureCategory;
     message: string;
   }): Promise<void>;
 };
 
-export type CharacterRepository = CharacterSyncRepository &
-  CharacterReadRepository &
-  CharacterSyncStateRepository & {
-    listCharactersForDashboard(): Promise<DashboardCharacter[]>;
-    listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
+export type LocationRepository = LocationSyncRepository &
+  LocationReadRepository &
+  LocationSyncStateRepository & {
+    listLocationsForDashboard(): Promise<DashboardLocation[]>;
+    listLocationSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
   };
 
-export function createDrizzleCharacterRepository(db: SidecarDb): CharacterRepository {
+export function createDrizzleLocationRepository(db: SidecarDb): LocationRepository {
   return {
-    async findCharacterSyncTarget() {
+    async findLocationSyncTarget() {
       const [database] = await db
         .select({
           canonId: schema.canonNotionDatabases.canonId,
@@ -51,7 +51,7 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
           status: schema.canonNotionDatabases.status,
         })
         .from(schema.canonNotionDatabases)
-        .where(eq(schema.canonNotionDatabases.elementType, "Character"))
+        .where(eq(schema.canonNotionDatabases.elementType, "Location"))
         .limit(1);
 
       if (!database?.notionDatabaseId || database.status === "needs_attention") {
@@ -60,10 +60,10 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
 
       return {
         canonId: database.canonId,
-        charactersDatabaseId: database.notionDatabaseId,
+        locationsDatabaseId: database.notionDatabaseId,
       };
     },
-    async markCharacterSyncStarted(canonId) {
+    async markLocationSyncStarted(canonId) {
       await upsertSyncState(db, {
         canonId,
         status: "syncing",
@@ -72,7 +72,7 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
         failureMessage: null,
       });
     },
-    async markCharacterSyncSucceeded(canonId, succeededAt) {
+    async markLocationSyncSucceeded(canonId, succeededAt) {
       await upsertSyncState(db, {
         canonId,
         status: "succeeded",
@@ -81,7 +81,7 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
         failureMessage: null,
       });
     },
-    async markCharacterSyncFailed(input) {
+    async markLocationSyncFailed(input) {
       await upsertSyncState(db, {
         canonId: input.canonId,
         status: "failed",
@@ -90,13 +90,13 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
         failureMessage: input.message,
       });
     },
-    async upsertCharacters(records) {
+    async upsertLocations(records) {
       for (const record of records) {
         await db
-          .insert(schema.characters)
+          .insert(schema.locations)
           .values(record)
           .onConflictDoUpdate({
-            target: [schema.characters.canonId, schema.characters.notionPageId],
+            target: [schema.locations.canonId, schema.locations.notionPageId],
             set: {
               name: record.name,
               notionUrl: record.notionUrl,
@@ -108,37 +108,37 @@ export function createDrizzleCharacterRepository(db: SidecarDb): CharacterReposi
           });
       }
     },
-    async listCharactersForDashboard() {
-      const characters = await db
+    async listLocationsForDashboard() {
+      const locations = await db
         .select()
-        .from(schema.characters)
-        .orderBy(desc(schema.characters.notionLastEditedAt));
+        .from(schema.locations)
+        .orderBy(desc(schema.locations.notionLastEditedAt));
 
-      return characters.map(toDashboardCharacter);
+      return locations.map(toDashboardLocation);
     },
-    async listSyncStatesForDashboard() {
+    async listLocationSyncStatesForDashboard() {
       const syncStates = await db.select().from(schema.sidecarSyncState);
 
       return syncStates
-        .filter((syncState) => syncState.source === CHARACTER_SYNC_SOURCE)
+        .filter((syncState) => syncState.source === LOCATION_SYNC_SOURCE)
         .map(toCanonSyncStateRecord);
     },
-    async listCharacters() {
-      const characters = await db
+    async listLocations() {
+      const locations = await db
         .select()
-        .from(schema.characters)
-        .orderBy(desc(schema.characters.notionLastEditedAt));
+        .from(schema.locations)
+        .orderBy(desc(schema.locations.notionLastEditedAt));
 
-      return characters.map(toCharacterBrowserItem);
+      return locations.map(toLocationBrowserItem);
     },
-    async findCharacterById(id) {
-      const [character] = await db
+    async findLocationById(id) {
+      const [location] = await db
         .select()
-        .from(schema.characters)
-        .where(eq(schema.characters.id, id))
+        .from(schema.locations)
+        .where(eq(schema.locations.id, id))
         .limit(1);
 
-      return character ? toCharacterWorkspaceRecord(character) : null;
+      return location ? toLocationWorkspaceRecord(location) : null;
     },
   };
 }
@@ -157,7 +157,7 @@ async function upsertSyncState(
     .insert(schema.sidecarSyncState)
     .values({
       canonId: input.canonId,
-      source: CHARACTER_SYNC_SOURCE,
+      source: LOCATION_SYNC_SOURCE,
       status: input.status,
       lastSucceededAt: input.lastSucceededAt,
       failureCategory: input.failureCategory,
@@ -177,14 +177,14 @@ async function upsertSyncState(
     });
 }
 
-function toDashboardCharacter(
-  character: typeof schema.characters.$inferSelect,
-): DashboardCharacter {
+function toDashboardLocation(
+  location: typeof schema.locations.$inferSelect,
+): DashboardLocation {
   return {
-    id: character.id,
-    name: character.name,
-    notionLastEditedAt: character.notionLastEditedAt,
-    lastSyncedAt: character.lastSyncedAt,
+    id: location.id,
+    name: location.name,
+    notionLastEditedAt: location.notionLastEditedAt,
+    lastSyncedAt: location.lastSyncedAt,
   };
 }
 
@@ -192,7 +192,7 @@ function toCanonSyncStateRecord(
   syncState: typeof schema.sidecarSyncState.$inferSelect,
 ): CanonSyncStateRecord {
   return {
-    source: "Characters",
+    source: "Locations",
     status: syncState.status,
     lastSucceededAt: syncState.lastSucceededAt,
     failure:
@@ -219,27 +219,27 @@ function toSyncFailureCategory(category: string): SyncFailureCategory {
   return "unknown";
 }
 
-function toCharacterBrowserItem(
-  character: typeof schema.characters.$inferSelect,
-): CharacterBrowserItem {
+function toLocationBrowserItem(
+  location: typeof schema.locations.$inferSelect,
+): LocationBrowserItem {
   return {
-    id: character.id,
-    name: character.name,
-    notionLastEditedAt: character.notionLastEditedAt,
-    lastSyncedAt: character.lastSyncedAt,
+    id: location.id,
+    name: location.name,
+    notionLastEditedAt: location.notionLastEditedAt,
+    lastSyncedAt: location.lastSyncedAt,
   };
 }
 
-function toCharacterWorkspaceRecord(
-  character: typeof schema.characters.$inferSelect,
-): CharacterWorkspaceRecord {
+function toLocationWorkspaceRecord(
+  location: typeof schema.locations.$inferSelect,
+): LocationWorkspaceRecord {
   return {
-    id: character.id,
-    name: character.name,
-    notionPageId: character.notionPageId,
-    notionUrl: character.notionUrl,
-    notionCreatedAt: character.notionCreatedAt,
-    notionLastEditedAt: character.notionLastEditedAt,
-    lastSyncedAt: character.lastSyncedAt,
+    id: location.id,
+    name: location.name,
+    notionPageId: location.notionPageId,
+    notionUrl: location.notionUrl,
+    notionCreatedAt: location.notionCreatedAt,
+    notionLastEditedAt: location.notionLastEditedAt,
+    lastSyncedAt: location.lastSyncedAt,
   };
 }

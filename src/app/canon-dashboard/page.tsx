@@ -1,6 +1,6 @@
 import { loadCanonDashboardFromLocalSidecar } from "@/characters/character-read-flow";
 import { CanonDashboardSurface } from "@/dashboard/canon-dashboard-surface";
-import { syncCharactersAction } from "./actions";
+import { syncCharactersAction, syncLocationsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,7 @@ export default async function CanonDashboardPage() {
       dashboard={result.data}
       error={result.ok ? undefined : result.error}
       syncCharactersAction={syncCharactersAction}
+      syncLocationsAction={syncLocationsAction}
     />
   );
 }

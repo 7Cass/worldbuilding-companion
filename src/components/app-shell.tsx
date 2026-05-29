@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { BookOpen, ClipboardList, LayoutDashboard, Settings, Users } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  LayoutDashboard,
+  MapPin,
+  Settings,
+  Users,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import { CANON_NAVIGATION_ITEMS } from "@/domain/canon-vocabulary";
@@ -8,6 +15,7 @@ const navigationIcons = {
   Setup: Settings,
   "Canon Dashboard": LayoutDashboard,
   Characters: Users,
+  Locations: MapPin,
   "Entity Workspace": BookOpen,
   "Review Queue": ClipboardList,
 } as const;

@@ -3,6 +3,7 @@ export type CanonNavigationItem = {
     | "Setup"
     | "Canon Dashboard"
     | "Characters"
+    | "Locations"
     | "Entity Workspace"
     | "Review Queue";
   href: string;
@@ -20,6 +21,10 @@ export const CANON_NAVIGATION_ITEMS = [
   {
     label: "Characters",
     href: "/characters",
+  },
+  {
+    label: "Locations",
+    href: "/locations",
   },
   {
     label: "Entity Workspace",

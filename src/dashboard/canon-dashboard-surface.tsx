@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  MapPin,
   RefreshCw,
   Users,
 } from "lucide-react";
@@ -14,12 +15,14 @@ type CanonDashboardSurfaceProps = {
   dashboard: CanonDashboard;
   error?: string;
   syncCharactersAction: () => void | Promise<void>;
+  syncLocationsAction: () => void | Promise<void>;
 };
 
 export function CanonDashboardSurface({
   dashboard,
   error,
   syncCharactersAction,
+  syncLocationsAction,
 }: CanonDashboardSurfaceProps) {
   return (
     <main className="grid gap-6">
@@ -39,10 +42,22 @@ export function CanonDashboardSurface({
               <span>Sync Characters</span>
             </Button>
           </form>
+          <form action={syncLocationsAction}>
+            <Button type="submit" variant="secondary">
+              <RefreshCw aria-hidden="true" className="size-4" />
+              <span>Sync Locations</span>
+            </Button>
+          </form>
           <Button asChild>
             <Link href="/characters">
               <Users aria-hidden="true" className="size-4" />
               <span>Browse Characters</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/locations">
+              <MapPin aria-hidden="true" className="size-4" />
+              <span>Browse Locations</span>
             </Link>
           </Button>
         </div>
@@ -120,7 +135,7 @@ export function CanonDashboardSurface({
             <p className="text-sm font-medium text-slate-600">{item.elementType}</p>
             <p className="mt-3 text-3xl font-semibold text-slate-950">{item.count}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {item.elementType === "Character"
+              {item.elementType === "Character" || item.elementType === "Location"
                 ? "Derived from Notion sync"
                 : "Awaiting Notion sync"}
             </p>
@@ -131,19 +146,13 @@ export function CanonDashboardSurface({
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-3">
           <h3 className="text-lg font-semibold text-slate-950">
-            Recent Character activity
+            Recent Canon activity
           </h3>
-          <Button asChild variant="secondary">
-            <Link href="/characters">
-              <span>Characters</span>
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-          </Button>
         </div>
 
         {dashboard.recentActivity.length === 0 ? (
           <article className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-sm text-slate-600">No Character activity synced yet.</p>
+            <p className="text-sm text-slate-600">No Canon activity synced yet.</p>
           </article>
         ) : (
           dashboard.recentActivity.map((activity) => (
@@ -163,7 +172,7 @@ export function CanonDashboardSurface({
                 </p>
               </div>
               <Button asChild variant="secondary">
-                <Link href={`/entity-workspace/characters/${activity.entityId}`}>
+                <Link href={workspaceHrefFor(activity)}>
                   <span>Open workspace</span>
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>
@@ -174,6 +183,14 @@ export function CanonDashboardSurface({
       </section>
     </main>
   );
+}
+
+function workspaceHrefFor(activity: CanonDashboard["recentActivity"][number]): string {
+  if (activity.elementType === "Location") {
+    return `/entity-workspace/locations/${activity.entityId}`;
+  }
+
+  return `/entity-workspace/characters/${activity.entityId}`;
 }
 
 function formatDate(date: Date): string {

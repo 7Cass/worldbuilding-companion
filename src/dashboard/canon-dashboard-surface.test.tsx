@@ -5,6 +5,42 @@ import { describe, expect, it, vi } from "vitest";
 import { CanonDashboardSurface } from "./canon-dashboard-surface";
 
 describe("CanonDashboardSurface", () => {
+  it("shows recent Location activity with a link to the Location workspace", () => {
+    render(
+      <CanonDashboardSurface
+        dashboard={{
+          elementCounts: [
+            { elementType: "Character", count: 0 },
+            { elementType: "Location", count: 1 },
+            { elementType: "Faction", count: 0 },
+            { elementType: "Event", count: 0 },
+            { elementType: "Lore Entry", count: 0 },
+            { elementType: "Relationship", count: 0 },
+            { elementType: "Source", count: 0 },
+          ],
+          recentActivity: [
+            {
+              elementType: "Location",
+              entityId: "location-1",
+              label: "The Glass Harbor",
+              happenedAt: new Date("2026-05-29T11:30:00.000Z"),
+            },
+          ],
+          syncStates: [],
+        }}
+        syncCharactersAction={vi.fn()}
+        syncLocationsAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Recent Canon activity")).toBeInTheDocument();
+    expect(screen.getByText("The Glass Harbor")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open workspace/ })).toHaveAttribute(
+      "href",
+      "/entity-workspace/locations/location-1",
+    );
+  });
+
   it("shows stale sync state and actionable failure detail without leaking secrets", () => {
     render(
       <CanonDashboardSurface
@@ -35,6 +71,7 @@ describe("CanonDashboardSurface", () => {
           ],
         }}
         syncCharactersAction={vi.fn()}
+        syncLocationsAction={vi.fn()}
       />,
     );
 

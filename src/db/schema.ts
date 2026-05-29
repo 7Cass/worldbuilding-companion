@@ -104,10 +104,37 @@ export const characters = pgTable(
   }),
 );
 
+export const locations = pgTable(
+  "locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    canonId: uuid("canon_id")
+      .notNull()
+      .references(() => canons.id, { onDelete: "cascade" }),
+    notionPageId: text("notion_page_id").notNull(),
+    name: text("name").notNull(),
+    notionUrl: text("notion_url"),
+    notionCreatedAt: timestamp("notion_created_at", { withTimezone: true }).notNull(),
+    notionLastEditedAt: timestamp("notion_last_edited_at", {
+      withTimezone: true,
+    }).notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    canonNotionPageIdx: uniqueIndex("locations_canon_notion_page_idx").on(
+      table.canonId,
+      table.notionPageId,
+    ),
+  }),
+);
+
 export const canonsRelations = relations(canons, ({ many }) => ({
   syncStates: many(sidecarSyncState),
   notionDatabases: many(canonNotionDatabases),
   characters: many(characters),
+  locations: many(locations),
 }));
 
 export const sidecarSyncStateRelations = relations(sidecarSyncState, ({ one }) => ({
@@ -130,6 +157,13 @@ export const canonNotionDatabasesRelations = relations(
 export const charactersRelations = relations(characters, ({ one }) => ({
   canon: one(canons, {
     fields: [characters.canonId],
+    references: [canons.id],
+  }),
+}));
+
+export const locationsRelations = relations(locations, ({ one }) => ({
+  canon: one(canons, {
+    fields: [locations.canonId],
     references: [canons.id],
   }),
 }));

@@ -59,4 +59,20 @@ describe("classifyNotionSyncFailure", () => {
     });
     expect(failure.message).not.toContain("secret_notion_token");
   });
+
+  it("uses the requested Canon element label in Location sync failure messages", () => {
+    const failure = classifyNotionSyncFailure(
+      new Error("Location page is missing the required Name title property."),
+      {
+        pluralLabel: "Locations",
+        singularLabel: "Location",
+      },
+    );
+
+    expect(failure).toEqual({
+      category: "schema_drift",
+      message:
+        "Restore the required Location properties in Notion, including the Name title property, then retry sync.",
+    });
+  });
 });
