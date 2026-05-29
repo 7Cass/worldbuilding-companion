@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CANON_ELEMENT_TYPES,
   CANON_NAVIGATION_ITEMS,
+  EVENT_TIMELINE_BOUNDARY,
   FACTION_LORE_ENTRY_BOUNDARY,
 } from "./canon-vocabulary";
 
@@ -14,6 +15,7 @@ describe("Canon vocabulary", () => {
       "Characters",
       "Locations",
       "Factions",
+      "Events",
       "Entity Workspace",
       "Review Queue",
     ]);
@@ -44,5 +46,13 @@ describe("Canon vocabulary", () => {
     expect(FACTION_LORE_ENTRY_BOUNDARY).toContain("religion as doctrine");
     expect(FACTION_LORE_ENTRY_BOUNDARY).toContain("Lore Entry");
     expect(FACTION_LORE_ENTRY_BOUNDARY).not.toContain("Organization");
+  });
+
+  it("keeps Timeline as a derived view over Events, not a stored Canon element", () => {
+    expect(CANON_ELEMENT_TYPES).toContain("Event");
+    expect(CANON_ELEMENT_TYPES).not.toContain("Timeline");
+    expect(EVENT_TIMELINE_BOUNDARY).toContain("Timeline");
+    expect(EVENT_TIMELINE_BOUNDARY).toContain("view over Events");
+    expect(EVENT_TIMELINE_BOUNDARY).toContain("not a stored Canon element");
   });
 });

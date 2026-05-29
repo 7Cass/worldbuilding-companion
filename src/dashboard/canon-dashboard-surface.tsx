@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  CalendarDays,
   CheckCircle2,
   Flag,
   MapPin,
@@ -18,6 +19,7 @@ type CanonDashboardSurfaceProps = {
   syncCharactersAction: () => void | Promise<void>;
   syncLocationsAction: () => void | Promise<void>;
   syncFactionsAction: () => void | Promise<void>;
+  syncEventsAction: () => void | Promise<void>;
 };
 
 export function CanonDashboardSurface({
@@ -26,6 +28,7 @@ export function CanonDashboardSurface({
   syncCharactersAction,
   syncLocationsAction,
   syncFactionsAction,
+  syncEventsAction,
 }: CanonDashboardSurfaceProps) {
   return (
     <main className="grid gap-6">
@@ -57,6 +60,12 @@ export function CanonDashboardSurface({
               <span>Sync Factions</span>
             </Button>
           </form>
+          <form action={syncEventsAction}>
+            <Button type="submit" variant="secondary">
+              <RefreshCw aria-hidden="true" className="size-4" />
+              <span>Sync Events</span>
+            </Button>
+          </form>
           <Button asChild>
             <Link href="/characters">
               <Users aria-hidden="true" className="size-4" />
@@ -73,6 +82,12 @@ export function CanonDashboardSurface({
             <Link href="/factions">
               <Flag aria-hidden="true" className="size-4" />
               <span>Browse Factions</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/events">
+              <CalendarDays aria-hidden="true" className="size-4" />
+              <span>Browse Events</span>
             </Link>
           </Button>
         </div>
@@ -152,7 +167,8 @@ export function CanonDashboardSurface({
             <p className="mt-1 text-sm text-slate-500">
               {item.elementType === "Character" ||
               item.elementType === "Location" ||
-              item.elementType === "Faction"
+              item.elementType === "Faction" ||
+              item.elementType === "Event"
                 ? "Derived from Notion sync"
                 : "Awaiting Notion sync"}
             </p>
@@ -209,6 +225,10 @@ function workspaceHrefFor(activity: CanonDashboard["recentActivity"][number]): s
 
   if (activity.elementType === "Faction") {
     return `/entity-workspace/factions/${activity.entityId}`;
+  }
+
+  if (activity.elementType === "Event") {
+    return `/entity-workspace/events/${activity.entityId}`;
   }
 
   return `/entity-workspace/characters/${activity.entityId}`;

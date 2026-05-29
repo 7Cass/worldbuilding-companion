@@ -1,4 +1,9 @@
-export const CANON_SYNC_SOURCES = ["Characters", "Locations", "Factions"] as const;
+export const CANON_SYNC_SOURCES = [
+  "Characters",
+  "Locations",
+  "Factions",
+  "Events",
+] as const;
 
 export type CanonSyncSource = (typeof CANON_SYNC_SOURCES)[number];
 

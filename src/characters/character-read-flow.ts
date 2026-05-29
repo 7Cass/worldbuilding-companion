@@ -2,14 +2,17 @@ import type { CharacterBrowserItem } from "@/characters/character-browser";
 import { formatLocalConfigErrors, loadLocalConfig } from "@/config/local-config";
 import { createSidecarDb } from "@/db/client";
 import { createDrizzleCharacterRepository } from "@/db/character-repository";
+import { createDrizzleEventRepository } from "@/db/event-repository";
 import { createDrizzleFactionRepository } from "@/db/faction-repository";
 import { createDrizzleLocationRepository } from "@/db/location-repository";
 import { getCanonDashboard, type CanonDashboard } from "@/dashboard/canon-dashboard";
 import { CANON_ELEMENT_TYPES } from "@/domain/canon-vocabulary";
+import type { EventBrowserItem } from "@/events/event-browser";
 import type { FactionBrowserItem } from "@/factions/faction-browser";
 import type { LocationBrowserItem } from "@/locations/location-browser";
 import { toDashboardSyncStates } from "@/sync/canon-sync-state";
 import type { CharacterWorkspaceRecord } from "@/workspace/character-workspace";
+import type { EventWorkspaceRecord } from "@/workspace/event-workspace";
 import type { FactionWorkspaceRecord } from "@/workspace/faction-workspace";
 import type { LocationWorkspaceRecord } from "@/workspace/location-workspace";
 
@@ -44,6 +47,7 @@ export async function loadCanonDashboardFromLocalSidecar(): Promise<
     const characterRepository = createDrizzleCharacterRepository(db);
     const locationRepository = createDrizzleLocationRepository(db);
     const factionRepository = createDrizzleFactionRepository(db);
+    const eventRepository = createDrizzleEventRepository(db);
 
     return {
       ok: true,
@@ -54,11 +58,13 @@ export async function loadCanonDashboardFromLocalSidecar(): Promise<
           listLocationsForDashboard: () =>
             locationRepository.listLocationsForDashboard(),
           listFactionsForDashboard: () => factionRepository.listFactionsForDashboard(),
+          listEventsForDashboard: () => eventRepository.listEventsForDashboard(),
           async listSyncStatesForDashboard() {
             return [
               ...(await characterRepository.listSyncStatesForDashboard()),
               ...(await locationRepository.listLocationSyncStatesForDashboard()),
               ...(await factionRepository.listFactionSyncStatesForDashboard()),
+              ...(await eventRepository.listEventSyncStatesForDashboard()),
             ];
           },
         },
@@ -168,6 +174,37 @@ export async function loadFactionsFromLocalSidecar(): Promise<
   }
 }
 
+export async function loadEventsFromLocalSidecar(): Promise<
+  LocalReadResult<EventBrowserItem[]>
+> {
+  const configResult = loadLocalConfig(process.env);
+
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      data: [],
+      error: formatLocalConfigErrors(configResult.errors),
+    };
+  }
+
+  const { db, pool } = createSidecarDb(process.env);
+
+  try {
+    return {
+      ok: true,
+      data: await createDrizzleEventRepository(db).listEvents(),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      data: [],
+      error: error instanceof Error ? error.message : "Could not load Events.",
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function loadCharacterWorkspaceFromLocalSidecar(
   characterId: string,
 ): Promise<LocalReadResult<CharacterWorkspaceRecord | null>> {
@@ -255,6 +292,37 @@ export async function loadFactionWorkspaceFromLocalSidecar(
       ok: false,
       data: null,
       error: error instanceof Error ? error.message : "Could not load Faction workspace.",
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function loadEventWorkspaceFromLocalSidecar(
+  eventId: string,
+): Promise<LocalReadResult<EventWorkspaceRecord | null>> {
+  const configResult = loadLocalConfig(process.env);
+
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      data: null,
+      error: formatLocalConfigErrors(configResult.errors),
+    };
+  }
+
+  const { db, pool } = createSidecarDb(process.env);
+
+  try {
+    return {
+      ok: true,
+      data: await createDrizzleEventRepository(db).findEventById(eventId),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      data: null,
+      error: error instanceof Error ? error.message : "Could not load Event workspace.",
     };
   } finally {
     await pool.end();

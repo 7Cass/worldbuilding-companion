@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { syncCharactersFromLocalSetup } from "@/characters/character-sync-flow";
+import { syncEventsFromLocalSetup } from "@/events/event-sync-flow";
 import { syncFactionsFromLocalSetup } from "@/factions/faction-sync-flow";
 import { syncLocationsFromLocalSetup } from "@/locations/location-sync-flow";
 
@@ -33,6 +34,17 @@ export async function syncFactionsAction() {
 
   revalidatePath("/canon-dashboard");
   revalidatePath("/factions");
+
+  if (!result.ok) {
+    throw new Error(result.errors.join("\n"));
+  }
+}
+
+export async function syncEventsAction() {
+  const result = await syncEventsFromLocalSetup();
+
+  revalidatePath("/canon-dashboard");
+  revalidatePath("/events");
 
   if (!result.ok) {
     throw new Error(result.errors.join("\n"));

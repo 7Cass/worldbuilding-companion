@@ -27,10 +27,18 @@ export type DashboardFaction = {
   lastSyncedAt: Date;
 };
 
+export type DashboardEvent = {
+  id: string;
+  name: string;
+  notionLastEditedAt: Date;
+  lastSyncedAt: Date;
+};
+
 export type CanonDashboardRepository = {
   listCharactersForDashboard(): Promise<DashboardCharacter[]>;
   listLocationsForDashboard(): Promise<DashboardLocation[]>;
   listFactionsForDashboard(): Promise<DashboardFaction[]>;
+  listEventsForDashboard(): Promise<DashboardEvent[]>;
   listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
 };
 
@@ -40,7 +48,7 @@ export type CanonDashboard = {
     count: number;
   }>;
   recentActivity: Array<{
-    elementType: "Character" | "Location" | "Faction";
+    elementType: "Character" | "Location" | "Faction" | "Event";
     entityId: string;
     label: string;
     happenedAt: Date;
@@ -54,6 +62,7 @@ export async function getCanonDashboard(input: {
   const characters = await input.repository.listCharactersForDashboard();
   const locations = await input.repository.listLocationsForDashboard();
   const factions = await input.repository.listFactionsForDashboard();
+  const events = await input.repository.listEventsForDashboard();
   const syncStates = await input.repository.listSyncStatesForDashboard();
 
   return {
@@ -66,7 +75,9 @@ export async function getCanonDashboard(input: {
             ? locations.length
             : elementType === "Faction"
               ? factions.length
-              : 0,
+              : elementType === "Event"
+                ? events.length
+                : 0,
     })),
     recentActivity: [
       ...characters.map((character) => ({
@@ -86,6 +97,12 @@ export async function getCanonDashboard(input: {
         entityId: faction.id,
         label: faction.name,
         happenedAt: faction.notionLastEditedAt,
+      })),
+      ...events.map((event) => ({
+        elementType: "Event" as const,
+        entityId: event.id,
+        label: event.name,
+        happenedAt: event.notionLastEditedAt,
       })),
     ]
       .sort((left, right) => right.happenedAt.getTime() - left.happenedAt.getTime())
