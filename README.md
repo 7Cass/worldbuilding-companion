@@ -10,6 +10,7 @@ Local web app for shaping, checking, and navigating a Notion-first Canon.
 4. Run `pnpm db:migrate`.
 5. Run `pnpm db:verify`.
 6. Run `pnpm dev` and open the local Next.js URL.
+7. Open `/setup`, enter a Canon name, and provision the owned Notion structure.
 
 ## Sidecar Database
 
@@ -26,6 +27,14 @@ The Docker Compose runtime starts Postgres with credentials that match `.env.exa
 `pnpm db:verify` checks the Postgres connection and prints that Postgres is derived sidecar state while Notion remains canonical. It does not create or change Canon data.
 
 After a reset, start Postgres again and rerun `pnpm db:migrate` before using the app.
+
+## Canon Provisioning
+
+The Setup surface can create or register one Canon and provision the owned Notion structure under `NOTION_PARENT_PAGE_ID` using the internal Notion integration from `NOTION_TOKEN`.
+
+Provisioning creates or verifies separate Notion databases for Characters, Locations, Factions, Events, Lore Entries, Relationships, and Sources. Re-running the flow is idempotent: each database is reported as `created`, `reused`, or `needs_attention`.
+
+Postgres stores the Canon identity, Notion database identifiers, provisioning status, and sync metadata as derived sidecar state. Notion remains the canonical source for Canon data.
 
 ## Scripts
 

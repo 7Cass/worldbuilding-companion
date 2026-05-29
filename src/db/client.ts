@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
+import * as schema from "@/db/schema";
 import {
   formatLocalConfigErrors,
   loadLocalConfig,
@@ -19,7 +20,7 @@ export function createSidecarDb(env: Env = process.env) {
   });
 
   return {
-    db: drizzle(pool),
+    db: drizzle(pool, { schema }),
     pool,
   };
 }
