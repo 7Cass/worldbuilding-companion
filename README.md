@@ -36,6 +36,12 @@ Provisioning creates or verifies separate Notion databases for Characters, Locat
 
 Postgres stores the Canon identity, Notion database identifiers, provisioning status, and sync metadata as derived sidecar state. Notion remains the canonical source for Canon data.
 
+## Character Sync
+
+After provisioning, the Canon Dashboard and Characters surface can sync the owned Characters database from Notion into the local Postgres sidecar. Re-running Character sync upserts by Canon and Notion page id, so the sidecar updates derived Character records without duplicating them.
+
+The Canon Dashboard shows the derived Character count and recent Character activity from Postgres. The Characters surface opens a Character Entity Workspace with core fields and placeholder areas for Relationships, Sources, diagnostics, and review state.
+
 ## Scripts
 
 - `pnpm dev`: starts the local Next.js app.

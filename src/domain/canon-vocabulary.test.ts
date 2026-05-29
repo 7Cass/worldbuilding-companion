@@ -7,6 +7,7 @@ describe("Canon vocabulary", () => {
     expect(CANON_NAVIGATION_ITEMS.map((item) => item.label)).toEqual([
       "Setup",
       "Canon Dashboard",
+      "Characters",
       "Entity Workspace",
       "Review Queue",
     ]);
