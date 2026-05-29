@@ -6,15 +6,26 @@ Local web app for shaping, checking, and navigating a Notion-first Canon.
 
 1. Copy `.env.example` to `.env.local` and replace the placeholder values.
 2. Run `pnpm install`.
-3. Provide a local Postgres database that matches `DATABASE_URL`.
+3. Run `docker compose up -d` to start the local Postgres sidecar.
 4. Run `pnpm db:migrate`.
-5. Run `pnpm dev` and open the local Next.js URL.
+5. Run `pnpm db:verify`.
+6. Run `pnpm dev` and open the local Next.js URL.
 
 ## Sidecar Database
 
 Postgres is sidecar persistence for derived Canon state. Notion remains the canonical source.
 
-The current scaffold expects an existing Postgres instance reachable through `DATABASE_URL`. A reproducible Docker Compose runtime is tracked in [issue #17](https://github.com/7Cass/worldbuilding-companion/issues/17) and should land before Canon provisioning work in [issue #2](https://github.com/7Cass/worldbuilding-companion/issues/2).
+The Docker Compose runtime starts Postgres with credentials that match `.env.example`:
+
+- Start: `docker compose up -d`
+- Apply migrations: `pnpm db:migrate`
+- Verify connectivity: `pnpm db:verify`
+- Stop: `docker compose down`
+- Reset local database storage: `docker compose down --volumes`
+
+`pnpm db:verify` checks the Postgres connection and prints that Postgres is derived sidecar state while Notion remains canonical. It does not create or change Canon data.
+
+After a reset, start Postgres again and rerun `pnpm db:migrate` before using the app.
 
 ## Scripts
 
@@ -24,4 +35,5 @@ The current scaffold expects an existing Postgres instance reachable through `DA
 - `pnpm lint`: runs ESLint.
 - `pnpm db:generate`: generates Drizzle migrations from `src/db/schema.ts`.
 - `pnpm db:migrate`: applies Drizzle migrations to Postgres using `DATABASE_URL`.
+- `pnpm db:verify`: verifies the local Postgres sidecar connection without writing Canon data.
 - `pnpm db:studio`: opens Drizzle Studio.

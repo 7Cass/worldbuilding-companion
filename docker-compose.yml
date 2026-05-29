@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: worldbuilding
+      POSTGRES_PASSWORD: worldbuilding
+      POSTGRES_DB: worldbuilding_companion
+    ports:
+      - "55432:5432"
+    volumes:
+      - worldbuilding-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U worldbuilding -d worldbuilding_companion"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  worldbuilding-postgres-data:
