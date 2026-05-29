@@ -52,11 +52,13 @@ describe("provisionCanonNotionStructure", () => {
             },
           },
         ],
-        properties: expect.objectContaining({
-          Name: {
-            title: {},
-          },
-        }),
+        initial_data_source: {
+          properties: expect.objectContaining({
+            Name: {
+              title: {},
+            },
+          }),
+        },
       }),
     );
 
@@ -76,6 +78,84 @@ describe("provisionCanonNotionStructure", () => {
         lastProvisionedAt: new Date("2026-05-29T12:00:00.000Z"),
         attentionReason: null,
       })),
+    );
+  });
+
+  it("retrieves existing database schema from the Notion data source", async () => {
+    const { notion, sdk } = createMockNotionSdkClient({
+      retrievedDatabases: {
+        "existing-database-1": {
+          id: "existing-database-1",
+          properties: {
+            Name: {
+              type: "title",
+            },
+          },
+        },
+      },
+    });
+
+    const database = await notion.databases.retrieve({
+      database_id: "existing-database-1",
+    });
+
+    expect(database).toEqual({
+      id: "existing-database-1",
+      properties: {
+        Name: {
+          type: "title",
+        },
+      },
+    });
+    expect(sdk.databases.retrieve).toHaveBeenCalledWith({
+      database_id: "existing-database-1",
+    });
+    expect(sdk.dataSources.retrieve).toHaveBeenCalledWith({
+      data_source_id: "existing-database-1-data-source",
+    });
+  });
+
+  it("does not send ignored legacy database properties to the Notion SDK", async () => {
+    const { notion, sdk } = createMockNotionSdkClient();
+
+    const database = await notion.databases.create({
+      parent: {
+        type: "page_id",
+        page_id: "notion-parent-page",
+      },
+      title: [
+        {
+          type: "text",
+          text: {
+            content: "Ashen Coast Characters",
+          },
+        },
+      ],
+      properties: {
+        Name: {
+          title: {},
+        },
+      },
+    });
+
+    expect(database).toEqual({
+      id: "created-database-1",
+    });
+    expect(sdk.databases.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initial_data_source: {
+          properties: {
+            Name: {
+              title: {},
+            },
+          },
+        },
+      }),
+    );
+    expect(sdk.databases.create).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        properties: expect.anything(),
+      }),
     );
   });
 
@@ -195,22 +275,21 @@ function createMockNotionSdkClient(input?: {
 
   const sdk = {
     databases: {
-      create: vi.fn(async () => ({
-        ...(() => {
-          if (input?.createError) {
-            throw input.createError;
-          }
+      create: vi.fn(async () => {
+        if (input?.createError) {
+          throw input.createError;
+        }
 
-          return {
-            id: `created-database-${nextDatabaseId++}`,
-            properties: {
-              Name: {
-                type: "title",
-              },
+        return {
+          id: `created-database-${nextDatabaseId++}`,
+          data_sources: [
+            {
+              id: `created-database-${nextDatabaseId - 1}-data-source`,
+              name: "Default",
             },
-          };
-        })(),
-      })),
+          ],
+        };
+      }),
       retrieve: vi.fn(async ({ database_id }) => {
         const database = input?.retrievedDatabases?.[database_id];
 
@@ -218,7 +297,30 @@ function createMockNotionSdkClient(input?: {
           throw new Error(`Missing mock database ${database_id}.`);
         }
 
-        return database;
+        return {
+          id: database.id,
+          data_sources: [
+            {
+              id: `${database.id}-data-source`,
+              name: "Default",
+            },
+          ],
+        };
+      }),
+    },
+    dataSources: {
+      retrieve: vi.fn(async ({ data_source_id }) => {
+        const databaseId = data_source_id.replace(/-data-source$/, "");
+        const database = input?.retrievedDatabases?.[databaseId];
+
+        if (!database) {
+          throw new Error(`Missing mock data source ${data_source_id}.`);
+        }
+
+        return {
+          id: data_source_id,
+          properties: database.properties,
+        };
       }),
     },
   };

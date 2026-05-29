@@ -62,6 +62,10 @@ export type NotionDatabaseResponse = {
   properties: Record<string, unknown>;
 };
 
+export type NotionDatabaseIdentity = {
+  id: string;
+};
+
 export type NotionProvisioningClient = {
   databases: {
     create(input: {
@@ -76,7 +80,7 @@ export type NotionProvisioningClient = {
         };
       }>;
       properties: Record<string, unknown>;
-    }): Promise<NotionDatabaseResponse>;
+    }): Promise<NotionDatabaseIdentity>;
     retrieve(input: { database_id: string }): Promise<NotionDatabaseResponse>;
   };
 };
