@@ -4,6 +4,7 @@ import {
   syncCharactersAction,
   syncEventsAction,
   syncFactionsAction,
+  syncLoreEntriesAction,
   syncLocationsAction,
 } from "./actions";
 
@@ -20,6 +21,7 @@ export default async function CanonDashboardPage() {
       syncLocationsAction={syncLocationsAction}
       syncFactionsAction={syncFactionsAction}
       syncEventsAction={syncEventsAction}
+      syncLoreEntriesAction={syncLoreEntriesAction}
     />
   );
 }

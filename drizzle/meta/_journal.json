@@ -43,6 +43,13 @@
       "when": 1780096581213,
       "tag": "0005_simple_pretty_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780101664429,
+      "tag": "0006_mixed_serpent_society",
+      "breakpoints": true
     }
   ]
 }

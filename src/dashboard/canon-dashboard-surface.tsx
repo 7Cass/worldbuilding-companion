@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ArrowRight,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   Flag,
@@ -20,6 +21,7 @@ type CanonDashboardSurfaceProps = {
   syncLocationsAction: () => void | Promise<void>;
   syncFactionsAction: () => void | Promise<void>;
   syncEventsAction: () => void | Promise<void>;
+  syncLoreEntriesAction: () => void | Promise<void>;
 };
 
 export function CanonDashboardSurface({
@@ -29,6 +31,7 @@ export function CanonDashboardSurface({
   syncLocationsAction,
   syncFactionsAction,
   syncEventsAction,
+  syncLoreEntriesAction,
 }: CanonDashboardSurfaceProps) {
   return (
     <main className="grid gap-6">
@@ -66,6 +69,12 @@ export function CanonDashboardSurface({
               <span>Sync Events</span>
             </Button>
           </form>
+          <form action={syncLoreEntriesAction}>
+            <Button type="submit" variant="secondary">
+              <RefreshCw aria-hidden="true" className="size-4" />
+              <span>Sync Lore Entries</span>
+            </Button>
+          </form>
           <Button asChild>
             <Link href="/characters">
               <Users aria-hidden="true" className="size-4" />
@@ -88,6 +97,12 @@ export function CanonDashboardSurface({
             <Link href="/events">
               <CalendarDays aria-hidden="true" className="size-4" />
               <span>Browse Events</span>
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/lore-entries">
+              <BookOpen aria-hidden="true" className="size-4" />
+              <span>Browse Lore Entries</span>
             </Link>
           </Button>
         </div>
@@ -168,7 +183,8 @@ export function CanonDashboardSurface({
               {item.elementType === "Character" ||
               item.elementType === "Location" ||
               item.elementType === "Faction" ||
-              item.elementType === "Event"
+              item.elementType === "Event" ||
+              item.elementType === "Lore Entry"
                 ? "Derived from Notion sync"
                 : "Awaiting Notion sync"}
             </p>
@@ -229,6 +245,10 @@ function workspaceHrefFor(activity: CanonDashboard["recentActivity"][number]): s
 
   if (activity.elementType === "Event") {
     return `/entity-workspace/events/${activity.entityId}`;
+  }
+
+  if (activity.elementType === "Lore Entry") {
+    return `/entity-workspace/lore-entries/${activity.entityId}`;
   }
 
   return `/entity-workspace/characters/${activity.entityId}`;

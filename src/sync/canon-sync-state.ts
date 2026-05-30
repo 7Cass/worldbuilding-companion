@@ -3,6 +3,7 @@ export const CANON_SYNC_SOURCES = [
   "Locations",
   "Factions",
   "Events",
+  "Lore Entries",
 ] as const;
 
 export type CanonSyncSource = (typeof CANON_SYNC_SOURCES)[number];

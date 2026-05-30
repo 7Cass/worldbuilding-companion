@@ -29,6 +29,11 @@ export type FactionSyncFlowResult =
       errors: string[];
     };
 
+type FactionSyncStateWriter = Pick<
+  FactionSyncStateRepository,
+  "markFactionSyncStarted" | "markFactionSyncSucceeded" | "markFactionSyncFailed"
+>;
+
 export async function syncFactionsFromLocalSetup(input?: {
   env?: Env;
 }): Promise<FactionSyncFlowResult> {
@@ -72,7 +77,7 @@ export async function syncFactionsFromLocalSetup(input?: {
 export async function syncFactionsForTarget(input: {
   target: FactionSyncTarget;
   notion: NotionFactionSyncClient;
-  repository: FactionSyncRepository & FactionSyncStateRepository;
+  repository: FactionSyncRepository & FactionSyncStateWriter;
   now?: Date;
 }): Promise<FactionSyncFlowResult> {
   const now = input.now ?? new Date();

@@ -1,4 +1,5 @@
 import { CANON_ELEMENT_TYPES } from "@/domain/canon-vocabulary";
+import type { LoreEntrySubtype } from "@/notion/lore-entry-sync";
 import type { CanonElementType } from "@/notion/schema-provisioner";
 import {
   type CanonSyncStateRecord,
@@ -34,11 +35,20 @@ export type DashboardEvent = {
   lastSyncedAt: Date;
 };
 
+export type DashboardLoreEntry = {
+  id: string;
+  name: string;
+  subtype: LoreEntrySubtype;
+  notionLastEditedAt: Date;
+  lastSyncedAt: Date;
+};
+
 export type CanonDashboardRepository = {
   listCharactersForDashboard(): Promise<DashboardCharacter[]>;
   listLocationsForDashboard(): Promise<DashboardLocation[]>;
   listFactionsForDashboard(): Promise<DashboardFaction[]>;
   listEventsForDashboard(): Promise<DashboardEvent[]>;
+  listLoreEntriesForDashboard(): Promise<DashboardLoreEntry[]>;
   listSyncStatesForDashboard(): Promise<CanonSyncStateRecord[]>;
 };
 
@@ -48,7 +58,7 @@ export type CanonDashboard = {
     count: number;
   }>;
   recentActivity: Array<{
-    elementType: "Character" | "Location" | "Faction" | "Event";
+    elementType: "Character" | "Location" | "Faction" | "Event" | "Lore Entry";
     entityId: string;
     label: string;
     happenedAt: Date;
@@ -63,6 +73,7 @@ export async function getCanonDashboard(input: {
   const locations = await input.repository.listLocationsForDashboard();
   const factions = await input.repository.listFactionsForDashboard();
   const events = await input.repository.listEventsForDashboard();
+  const loreEntries = await input.repository.listLoreEntriesForDashboard();
   const syncStates = await input.repository.listSyncStatesForDashboard();
 
   return {
@@ -73,11 +84,13 @@ export async function getCanonDashboard(input: {
           ? characters.length
           : elementType === "Location"
             ? locations.length
-            : elementType === "Faction"
-              ? factions.length
-              : elementType === "Event"
-                ? events.length
-                : 0,
+              : elementType === "Faction"
+                ? factions.length
+                : elementType === "Event"
+                  ? events.length
+                  : elementType === "Lore Entry"
+                    ? loreEntries.length
+                    : 0,
     })),
     recentActivity: [
       ...characters.map((character) => ({
@@ -103,6 +116,12 @@ export async function getCanonDashboard(input: {
         entityId: event.id,
         label: event.name,
         happenedAt: event.notionLastEditedAt,
+      })),
+      ...loreEntries.map((loreEntry) => ({
+        elementType: "Lore Entry" as const,
+        entityId: loreEntry.id,
+        label: loreEntry.name,
+        happenedAt: loreEntry.notionLastEditedAt,
       })),
     ]
       .sort((left, right) => right.happenedAt.getTime() - left.happenedAt.getTime())

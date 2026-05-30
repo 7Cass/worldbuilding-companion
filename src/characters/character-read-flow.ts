@@ -4,16 +4,19 @@ import { createSidecarDb } from "@/db/client";
 import { createDrizzleCharacterRepository } from "@/db/character-repository";
 import { createDrizzleEventRepository } from "@/db/event-repository";
 import { createDrizzleFactionRepository } from "@/db/faction-repository";
+import { createDrizzleLoreEntryRepository } from "@/db/lore-entry-repository";
 import { createDrizzleLocationRepository } from "@/db/location-repository";
 import { getCanonDashboard, type CanonDashboard } from "@/dashboard/canon-dashboard";
 import { CANON_ELEMENT_TYPES } from "@/domain/canon-vocabulary";
 import type { EventBrowserItem } from "@/events/event-browser";
 import type { FactionBrowserItem } from "@/factions/faction-browser";
+import type { LoreEntryBrowserItem } from "@/lore-entries/lore-entry-browser";
 import type { LocationBrowserItem } from "@/locations/location-browser";
 import { toDashboardSyncStates } from "@/sync/canon-sync-state";
 import type { CharacterWorkspaceRecord } from "@/workspace/character-workspace";
 import type { EventWorkspaceRecord } from "@/workspace/event-workspace";
 import type { FactionWorkspaceRecord } from "@/workspace/faction-workspace";
+import type { LoreEntryWorkspaceRecord } from "@/workspace/lore-entry-workspace";
 import type { LocationWorkspaceRecord } from "@/workspace/location-workspace";
 
 export type LocalReadResult<T> =
@@ -48,6 +51,7 @@ export async function loadCanonDashboardFromLocalSidecar(): Promise<
     const locationRepository = createDrizzleLocationRepository(db);
     const factionRepository = createDrizzleFactionRepository(db);
     const eventRepository = createDrizzleEventRepository(db);
+    const loreEntryRepository = createDrizzleLoreEntryRepository(db);
 
     return {
       ok: true,
@@ -59,12 +63,15 @@ export async function loadCanonDashboardFromLocalSidecar(): Promise<
             locationRepository.listLocationsForDashboard(),
           listFactionsForDashboard: () => factionRepository.listFactionsForDashboard(),
           listEventsForDashboard: () => eventRepository.listEventsForDashboard(),
+          listLoreEntriesForDashboard: () =>
+            loreEntryRepository.listLoreEntriesForDashboard(),
           async listSyncStatesForDashboard() {
             return [
               ...(await characterRepository.listSyncStatesForDashboard()),
               ...(await locationRepository.listLocationSyncStatesForDashboard()),
               ...(await factionRepository.listFactionSyncStatesForDashboard()),
               ...(await eventRepository.listEventSyncStatesForDashboard()),
+              ...(await loreEntryRepository.listLoreEntrySyncStatesForDashboard()),
             ];
           },
         },
@@ -205,6 +212,37 @@ export async function loadEventsFromLocalSidecar(): Promise<
   }
 }
 
+export async function loadLoreEntriesFromLocalSidecar(): Promise<
+  LocalReadResult<LoreEntryBrowserItem[]>
+> {
+  const configResult = loadLocalConfig(process.env);
+
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      data: [],
+      error: formatLocalConfigErrors(configResult.errors),
+    };
+  }
+
+  const { db, pool } = createSidecarDb(process.env);
+
+  try {
+    return {
+      ok: true,
+      data: await createDrizzleLoreEntryRepository(db).listLoreEntries(),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      data: [],
+      error: error instanceof Error ? error.message : "Could not load Lore Entries.",
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function loadCharacterWorkspaceFromLocalSidecar(
   characterId: string,
 ): Promise<LocalReadResult<CharacterWorkspaceRecord | null>> {
@@ -323,6 +361,38 @@ export async function loadEventWorkspaceFromLocalSidecar(
       ok: false,
       data: null,
       error: error instanceof Error ? error.message : "Could not load Event workspace.",
+    };
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function loadLoreEntryWorkspaceFromLocalSidecar(
+  loreEntryId: string,
+): Promise<LocalReadResult<LoreEntryWorkspaceRecord | null>> {
+  const configResult = loadLocalConfig(process.env);
+
+  if (!configResult.ok) {
+    return {
+      ok: false,
+      data: null,
+      error: formatLocalConfigErrors(configResult.errors),
+    };
+  }
+
+  const { db, pool } = createSidecarDb(process.env);
+
+  try {
+    return {
+      ok: true,
+      data: await createDrizzleLoreEntryRepository(db).findLoreEntryById(loreEntryId),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      data: null,
+      error:
+        error instanceof Error ? error.message : "Could not load Lore Entry workspace.",
     };
   } finally {
     await pool.end();

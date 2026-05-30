@@ -26,6 +26,19 @@ export const canonElementType = pgEnum("canon_element_type", [
   "Source",
 ]);
 
+export const loreEntrySubtype = pgEnum("lore_entry_subtype", [
+  "Species",
+  "Culture",
+  "Religion",
+  "Magic System",
+  "Technology",
+  "Artifact",
+  "Language",
+  "Custom",
+  "Law",
+  "Other",
+]);
+
 export const provisioningStatus = pgEnum("provisioning_status", [
   "created",
   "reused",
@@ -182,6 +195,33 @@ export const events = pgTable(
   }),
 );
 
+export const loreEntries = pgTable(
+  "lore_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    canonId: uuid("canon_id")
+      .notNull()
+      .references(() => canons.id, { onDelete: "cascade" }),
+    notionPageId: text("notion_page_id").notNull(),
+    name: text("name").notNull(),
+    subtype: loreEntrySubtype("subtype").notNull(),
+    notionUrl: text("notion_url"),
+    notionCreatedAt: timestamp("notion_created_at", { withTimezone: true }).notNull(),
+    notionLastEditedAt: timestamp("notion_last_edited_at", {
+      withTimezone: true,
+    }).notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    canonNotionPageIdx: uniqueIndex("lore_entries_canon_notion_page_idx").on(
+      table.canonId,
+      table.notionPageId,
+    ),
+  }),
+);
+
 export const canonsRelations = relations(canons, ({ many }) => ({
   syncStates: many(sidecarSyncState),
   notionDatabases: many(canonNotionDatabases),
@@ -189,6 +229,7 @@ export const canonsRelations = relations(canons, ({ many }) => ({
   locations: many(locations),
   factions: many(factions),
   events: many(events),
+  loreEntries: many(loreEntries),
 }));
 
 export const sidecarSyncStateRelations = relations(sidecarSyncState, ({ one }) => ({
@@ -232,6 +273,13 @@ export const factionsRelations = relations(factions, ({ one }) => ({
 export const eventsRelations = relations(events, ({ one }) => ({
   canon: one(canons, {
     fields: [events.canonId],
+    references: [canons.id],
+  }),
+}));
+
+export const loreEntriesRelations = relations(loreEntries, ({ one }) => ({
+  canon: one(canons, {
+    fields: [loreEntries.canonId],
     references: [canons.id],
   }),
 }));

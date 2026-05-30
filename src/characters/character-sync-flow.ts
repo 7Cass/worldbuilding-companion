@@ -29,6 +29,11 @@ export type CharacterSyncFlowResult =
       errors: string[];
     };
 
+type CharacterSyncStateWriter = Pick<
+  CharacterSyncStateRepository,
+  "markCharacterSyncStarted" | "markCharacterSyncSucceeded" | "markCharacterSyncFailed"
+>;
+
 export async function syncCharactersFromLocalSetup(input?: {
   env?: Env;
 }): Promise<CharacterSyncFlowResult> {
@@ -72,7 +77,7 @@ export async function syncCharactersFromLocalSetup(input?: {
 export async function syncCharactersForTarget(input: {
   target: CharacterSyncTarget;
   notion: NotionCharacterSyncClient;
-  repository: CharacterSyncRepository & CharacterSyncStateRepository;
+  repository: CharacterSyncRepository & CharacterSyncStateWriter;
   now?: Date;
 }): Promise<CharacterSyncFlowResult> {
   const now = input.now ?? new Date();

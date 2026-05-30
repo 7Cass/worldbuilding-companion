@@ -29,6 +29,11 @@ export type EventSyncFlowResult =
       errors: string[];
     };
 
+type EventSyncStateWriter = Pick<
+  EventSyncStateRepository,
+  "markEventSyncStarted" | "markEventSyncSucceeded" | "markEventSyncFailed"
+>;
+
 export async function syncEventsFromLocalSetup(input?: {
   env?: Env;
 }): Promise<EventSyncFlowResult> {
@@ -72,7 +77,7 @@ export async function syncEventsFromLocalSetup(input?: {
 export async function syncEventsForTarget(input: {
   target: EventSyncTarget;
   notion: NotionEventSyncClient;
-  repository: EventSyncRepository & EventSyncStateRepository;
+  repository: EventSyncRepository & EventSyncStateWriter;
   now?: Date;
 }): Promise<EventSyncFlowResult> {
   const now = input.now ?? new Date();

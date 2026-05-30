@@ -6,6 +6,7 @@ export type CanonNavigationItem = {
     | "Locations"
     | "Factions"
     | "Events"
+    | "Lore Entries"
     | "Entity Workspace"
     | "Review Queue";
   href: string;
@@ -35,6 +36,10 @@ export const CANON_NAVIGATION_ITEMS = [
   {
     label: "Events",
     href: "/events",
+  },
+  {
+    label: "Lore Entries",
+    href: "/lore-entries",
   },
   {
     label: "Entity Workspace",

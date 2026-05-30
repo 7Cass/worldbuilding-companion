@@ -5,6 +5,50 @@ import { describe, expect, it, vi } from "vitest";
 import { CanonDashboardSurface } from "./canon-dashboard-surface";
 
 describe("CanonDashboardSurface", () => {
+  it("shows recent Lore Entry activity with a link to the Lore Entry workspace", () => {
+    render(
+      <CanonDashboardSurface
+        dashboard={{
+          elementCounts: [
+            { elementType: "Character", count: 0 },
+            { elementType: "Location", count: 0 },
+            { elementType: "Faction", count: 0 },
+            { elementType: "Event", count: 0 },
+            { elementType: "Lore Entry", count: 1 },
+            { elementType: "Relationship", count: 0 },
+            { elementType: "Source", count: 0 },
+          ],
+          recentActivity: [
+            {
+              elementType: "Lore Entry",
+              entityId: "lore-entry-1",
+              label: "Silver Flame Doctrine",
+              happenedAt: new Date("2026-05-29T11:30:00.000Z"),
+            },
+          ],
+          syncStates: [],
+        }}
+        syncCharactersAction={vi.fn()}
+        syncLocationsAction={vi.fn()}
+        syncFactionsAction={vi.fn()}
+        syncEventsAction={vi.fn()}
+        syncLoreEntriesAction={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /Sync Lore Entries/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Browse Lore Entries/ })).toHaveAttribute(
+      "href",
+      "/lore-entries",
+    );
+    expect(screen.getByText("Silver Flame Doctrine")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open workspace/ })).toHaveAttribute(
+      "href",
+      "/entity-workspace/lore-entries/lore-entry-1",
+    );
+    expect(screen.getAllByText("Derived from Notion sync")).toHaveLength(5);
+  });
+
   it("shows recent Event activity with a link to the Event workspace", () => {
     render(
       <CanonDashboardSurface
@@ -32,6 +76,7 @@ describe("CanonDashboardSurface", () => {
         syncLocationsAction={vi.fn()}
         syncFactionsAction={vi.fn()}
         syncEventsAction={vi.fn()}
+        syncLoreEntriesAction={vi.fn()}
       />,
     );
 
@@ -45,7 +90,7 @@ describe("CanonDashboardSurface", () => {
       "href",
       "/entity-workspace/events/event-1",
     );
-    expect(screen.getAllByText("Derived from Notion sync")).toHaveLength(4);
+    expect(screen.getAllByText("Derived from Notion sync")).toHaveLength(5);
   });
 
   it("shows recent Faction activity with a link to the Faction workspace", () => {
@@ -75,6 +120,7 @@ describe("CanonDashboardSurface", () => {
         syncLocationsAction={vi.fn()}
         syncFactionsAction={vi.fn()}
         syncEventsAction={vi.fn()}
+        syncLoreEntriesAction={vi.fn()}
       />,
     );
 
@@ -88,7 +134,7 @@ describe("CanonDashboardSurface", () => {
       "href",
       "/entity-workspace/factions/faction-1",
     );
-    expect(screen.getAllByText("Derived from Notion sync")).toHaveLength(4);
+    expect(screen.getAllByText("Derived from Notion sync")).toHaveLength(5);
   });
 
   it("shows recent Location activity with a link to the Location workspace", () => {
@@ -118,6 +164,7 @@ describe("CanonDashboardSurface", () => {
         syncLocationsAction={vi.fn()}
         syncFactionsAction={vi.fn()}
         syncEventsAction={vi.fn()}
+        syncLoreEntriesAction={vi.fn()}
       />,
     );
 
@@ -162,6 +209,7 @@ describe("CanonDashboardSurface", () => {
         syncLocationsAction={vi.fn()}
         syncFactionsAction={vi.fn()}
         syncEventsAction={vi.fn()}
+        syncLoreEntriesAction={vi.fn()}
       />,
     );
 

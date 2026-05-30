@@ -29,6 +29,11 @@ export type LocationSyncFlowResult =
       errors: string[];
     };
 
+type LocationSyncStateWriter = Pick<
+  LocationSyncStateRepository,
+  "markLocationSyncStarted" | "markLocationSyncSucceeded" | "markLocationSyncFailed"
+>;
+
 export async function syncLocationsFromLocalSetup(input?: {
   env?: Env;
 }): Promise<LocationSyncFlowResult> {
@@ -72,7 +77,7 @@ export async function syncLocationsFromLocalSetup(input?: {
 export async function syncLocationsForTarget(input: {
   target: LocationSyncTarget;
   notion: NotionLocationSyncClient;
-  repository: LocationSyncRepository & LocationSyncStateRepository;
+  repository: LocationSyncRepository & LocationSyncStateWriter;
   now?: Date;
 }): Promise<LocationSyncFlowResult> {
   const now = input.now ?? new Date();

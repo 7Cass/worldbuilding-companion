@@ -47,6 +47,18 @@ export function classifyNotionSyncFailure(
     };
   }
 
+  if (
+    labels.singularLabel === "Lore Entry" &&
+    (message.includes("required Subtype select property") ||
+      message.includes("supported Lore Entry subtype"))
+  ) {
+    return {
+      category: "schema_drift",
+      message:
+        "Restore the required Lore Entry properties in Notion, including the Name title and Subtype select properties, then retry sync.",
+    };
+  }
+
   return {
     category: "unknown",
     message:

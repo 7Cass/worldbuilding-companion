@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   BookOpen,
+  BookText,
   CalendarDays,
   ClipboardList,
   Flag,
@@ -20,6 +21,7 @@ const navigationIcons = {
   Locations: MapPin,
   Factions: Flag,
   Events: CalendarDays,
+  "Lore Entries": BookText,
   "Entity Workspace": BookOpen,
   "Review Queue": ClipboardList,
 } as const;

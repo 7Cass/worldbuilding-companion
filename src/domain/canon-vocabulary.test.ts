@@ -16,6 +16,7 @@ describe("Canon vocabulary", () => {
       "Locations",
       "Factions",
       "Events",
+      "Lore Entries",
       "Entity Workspace",
       "Review Queue",
     ]);
